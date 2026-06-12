@@ -1247,32 +1247,93 @@ function CreditsScene() {
   };
 }
 
+// ========== ÁLBUM COM FOTOS REAIS ==========
+// Nomes dos arquivos das fotos (devem estar dentro da pasta "photos")
+const albumFotos = [
+  "./photos/cap1.jpg",   // Capítulo 1 - O Começo
+  "./photos/cap2.jpg",   // Capítulo 2 - O Namoro
+  "./photos/cap3.jpg",   // Capítulo 3 - O Noivado
+  "./photos/cap4.jpg",   // Capítulo 4 - O Casamento
+  "./photos/cap5.jpg",   // Capítulo 5 - Lua de Mel
+  "./photos/epilogo.jpg" // Epílogo
+];
+
+// Pré‑carregar as imagens para evitar atrasos
+let imagensCarregadas = [];
+for (let i = 0; i < albumFotos.length; i++) {
+  let img = new Image();
+  img.src = albumFotos[i];
+  imagensCarregadas.push(img);
+}
+
 function AlbumScene() {
   let t = 0;
   let page = 0;
   const pages = PHASES.map(p => ({ name: p.name, phrase: p.phrase, id: p.id }));
   pages.push({ name: 'Epílogo', phrase: 'Passei anos correndo atrás dos meus sonhos. Então percebi que o mais bonito deles já estava correndo ao meu lado.', id: '∞' });
+  
   return {
     init(){},
     input() {
-      page++;
-      if (page >= pages.length) fadeTo(TitleScene(), 0.6);
+      if (page < pages.length - 1) {
+        page++;
+      } else {
+        fadeTo(TitleScene(), 0.6);
+      }
     },
-    update(dt){ t+=dt; },
+    update(dt){ t += dt; },
     render() {
+      // Fundo gradiente
       const g = ctx.createLinearGradient(0,0,0,H);
       g.addColorStop(0,'#1a0530'); g.addColorStop(1,'#3a1a5a');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+      
       const p = pages[page];
-      text('★ ÁLBUM SECRETO ★', W/2, 24, 16, '#ffd86a', 'center');
-      text(`Capítulo ${p.id} — ${p.name}`, W/2, 60, 22, '#fff', 'center');
-      // moldura para foto futura
-      px(W/2-100, 90, 200, 110, '#fff');
-      px(W/2-96, 94, 192, 102, '#222');
-      text('[espaço para foto]', W/2, 140, 12, 'rgba(255,255,255,0.5)', 'center');
-      text('Adicione fotos em /game/photos/', W/2, 158, 10, 'rgba(255,255,255,0.4)', 'center');
-      textWrap(`"${p.phrase}"`, W/2, 210, W-80, 13, 'rgba(255,255,255,0.9)', 'center');
-      text('Toque para próxima página →', W/2, H-22, 11, `rgba(255,255,255,${0.7+Math.sin(t*4)*0.3})`, 'center');
+      // Título
+      text('★ ÁLBUM DE FOTOS ★', W/2, 24, 16, '#ffd86a', 'center');
+      text(`Capítulo ${p.id} — ${p.name}`, W/2, 56, 20, '#fff', 'center');
+      
+      // Moldura da foto
+      const molduraX = W/2 - 100, molduraY = 84;
+      const molduraW = 200, molduraH = 110;
+      // Moldura branca externa
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(molduraX, molduraY, molduraW, molduraH);
+      // Fundo preto interno (caso a imagem demore ou falte)
+      ctx.fillStyle = '#222';
+      ctx.fillRect(molduraX+2, molduraY+2, molduraW-4, molduraH-4);
+      
+      // Desenha a foto (se já estiver carregada)
+      const img = imagensCarregadas[page];
+      if (img && img.complete && img.naturalWidth > 0) {
+        const areaW = molduraW - 4, areaH = molduraH - 4;
+        let drawW, drawH, dx, dy;
+        const imgW = img.naturalWidth, imgH = img.naturalHeight;
+        // Mantém a proporção e centraliza
+        if (imgW / imgH > areaW / areaH) {
+          drawH = areaH;
+          drawW = (imgW * areaH) / imgH;
+          dx = (areaW - drawW) / 2;
+          dy = 0;
+        } else {
+          drawW = areaW;
+          drawH = (imgH * areaW) / imgW;
+          dx = 0;
+          dy = (areaH - drawH) / 2;
+        }
+        ctx.drawImage(img, molduraX+2 + dx, molduraY+2 + dy, drawW, drawH);
+      } else {
+        text('[ carregando foto... ]', W/2, molduraY + molduraH/2 + 4, 12, '#aaa', 'center');
+      }
+      
+      // Frase do capítulo
+      textWrap(`"${p.phrase}"`, W/2, molduraY + molduraH + 16, W-80, 12, 'rgba(255,255,255,0.9)', 'center');
+      
+      // Navegação
+      const isLast = (page === pages.length - 1);
+      const hint = isLast ? 'Toque para voltar ao início →' : 'Toque para próxima página →';
+      text(hint, W/2, H-28, 11, `rgba(255,255,255,${0.7+Math.sin(t*4)*0.3})`, 'center');
     }
   };
 }
