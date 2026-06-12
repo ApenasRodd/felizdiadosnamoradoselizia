@@ -1271,9 +1271,13 @@ function AlbumScene() {
   let page = 0;
   const pages = PHASES.map(p => ({ name: p.name, phrase: p.phrase, id: p.id }));
   pages.push({ name: 'Epílogo', phrase: 'Passei anos correndo atrás dos meus sonhos. Então percebi que o mais bonito deles já estava correndo ao meu lado.', id: '∞' });
+
+  // Configuração: tamanho máximo da foto (dentro da moldura)
+  const MAX_FOTO_W = 400;
+  const MAX_FOTO_H = 260;
   
   return {
-    init(){},
+    init() {},
     input() {
       if (page < pages.length - 1) {
         page++;
@@ -1281,59 +1285,71 @@ function AlbumScene() {
         fadeTo(TitleScene(), 0.6);
       }
     },
-    update(dt){ t += dt; },
+    update(dt) { t += dt; },
     render() {
       // Fundo gradiente
-      const g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0,'#1a0530'); g.addColorStop(1,'#3a1a5a');
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#1a0530');
+      g.addColorStop(1, '#3a1a5a');
       ctx.fillStyle = g;
-      ctx.fillRect(0,0,W,H);
-      
+      ctx.fillRect(0, 0, W, H);
+
+      // Obtém a imagem atual
+      const img = imagensCarregadas[page];
+      let fotoW = 0, fotoH = 0;
+
+      if (img && img.complete && img.naturalWidth > 0) {
+        // Calcula o tamanho da foto respeitando os limites máximos
+        const imgW = img.naturalWidth;
+        const imgH = img.naturalHeight;
+        let ratio = 1;
+        if (imgW > MAX_FOTO_W) ratio = MAX_FOTO_W / imgW;
+        if (imgH * ratio > MAX_FOTO_H) ratio = MAX_FOTO_H / imgH;
+        fotoW = imgW * ratio;
+        fotoH = imgH * ratio;
+      } else {
+        // Fallback enquanto não carrega (moldura pequena)
+        fotoW = 200;
+        fotoH = 110;
+      }
+
+      // Posições base
+      const titleY = 24;
+      const subtitleY = 56;
+      const molduraX = W/2 - fotoW/2 - 10;   // -10 para a borda branca extra
+      const molduraY = subtitleY + 30;
+      const molduraW = fotoW + 20;           // largura total com bordas
+      const molduraH = fotoH + 20;
+      const fotoX = molduraX + 10;
+      const fotoY = molduraY + 10;
+
+      // Títulos
+      text('★ ÁLBUM DE FOTOS ★', W/2, titleY, 16, '#ffd86a', 'center');
       const p = pages[page];
-      // Título
-      text('★ ÁLBUM DE FOTOS ★', W/2, 24, 16, '#ffd86a', 'center');
-      text(`Capítulo ${p.id} — ${p.name}`, W/2, 56, 20, '#fff', 'center');
-      
-      // Moldura da foto
-      const molduraX = W/2 - 100, molduraY = 84;
-      const molduraW = 200, molduraH = 110;
-      // Moldura branca externa
+      text(`Capítulo ${p.id} — ${p.name}`, W/2, subtitleY, 18, '#fff', 'center');
+
+      // Moldura (externa branca, interna preta)
       ctx.fillStyle = '#fff';
       ctx.fillRect(molduraX, molduraY, molduraW, molduraH);
-      // Fundo preto interno (caso a imagem demore ou falte)
       ctx.fillStyle = '#222';
-      ctx.fillRect(molduraX+2, molduraY+2, molduraW-4, molduraH-4);
-      
-      // Desenha a foto (se já estiver carregada)
-      const img = imagensCarregadas[page];
+      ctx.fillRect(molduraX+4, molduraY+4, molduraW-8, molduraH-8);
+
+      // Desenha a foto
       if (img && img.complete && img.naturalWidth > 0) {
-        const areaW = molduraW - 4, areaH = molduraH - 4;
-        let drawW, drawH, dx, dy;
-        const imgW = img.naturalWidth, imgH = img.naturalHeight;
-        // Mantém a proporção e centraliza
-        if (imgW / imgH > areaW / areaH) {
-          drawH = areaH;
-          drawW = (imgW * areaH) / imgH;
-          dx = (areaW - drawW) / 2;
-          dy = 0;
-        } else {
-          drawW = areaW;
-          drawH = (imgH * areaW) / imgW;
-          dx = 0;
-          dy = (areaH - drawH) / 2;
-        }
-        ctx.drawImage(img, molduraX+2 + dx, molduraY+2 + dy, drawW, drawH);
+        ctx.drawImage(img, fotoX, fotoY, fotoW, fotoH);
       } else {
-        text('[ carregando foto... ]', W/2, molduraY + molduraH/2 + 4, 12, '#aaa', 'center');
+        text('[ carregando foto... ]', W/2, fotoY + fotoH/2, 12, '#aaa', 'center');
       }
-      
-      // Frase do capítulo
-      textWrap(`"${p.phrase}"`, W/2, molduraY + molduraH + 16, W-80, 12, 'rgba(255,255,255,0.9)', 'center');
-      
-      // Navegação
+
+      // Frase do capítulo (posicionada abaixo da moldura)
+      const phraseY = molduraY + molduraH + 20;
+      textWrap(`"${p.phrase}"`, W/2, phraseY, W-80, 12, 'rgba(255,255,255,0.9)', 'center');
+
+      // Instrução de navegação
       const isLast = (page === pages.length - 1);
       const hint = isLast ? 'Toque para voltar ao início →' : 'Toque para próxima página →';
-      text(hint, W/2, H-28, 11, `rgba(255,255,255,${0.7+Math.sin(t*4)*0.3})`, 'center');
+      const hintY = Math.min(H - 30, phraseY + 70);
+      text(hint, W/2, hintY, 11, `rgba(255,255,255,${0.7+Math.sin(t*4)*0.3})`, 'center');
     }
   };
 }
