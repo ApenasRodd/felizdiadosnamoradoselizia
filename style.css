@@ -1,0 +1,9 @@
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: Georgia, 'Times New Roman', serif; color: #fff; user-select: none; }
+#app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; }
+#game { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; }
+#ui { position: absolute; top: env(safe-area-inset-top, 12px); right: 12px; z-index: 10; }
+#muteBtn { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: 44px; height: 44px; border-radius: 50%; font-size: 20px; cursor: pointer; backdrop-filter: blur(6px); }
+#muteBtn:active { transform: scale(0.95); }
+#touchHint { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.7); font-size: 14px; pointer-events: none; opacity: 0; transition: opacity 0.4s; z-index: 5; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+#touchHint.show { opacity: 1; }
