@@ -1352,6 +1352,83 @@ function AlbumScene() {
       text(hint, W/2, hintY, 11, `rgba(255,255,255,${0.7+Math.sin(t*4)*0.3})`, 'center');
     }
   };
+}function AlbumScene() {
+  let t = 0;
+  let page = 0;
+  const pages = PHASES.map(p => ({ name: p.name, phrase: p.phrase, id: p.id }));
+  pages.push({ name: 'Epílogo', phrase: 'Passei anos correndo atrás dos meus sonhos. Então percebi que o mais bonito deles já estava correndo ao meu lado.', id: '∞' });
+
+  return {
+    init() {},
+    input() {
+      if (page < pages.length - 1) page++;
+      else fadeTo(TitleScene(), 0.6);
+    },
+    update(dt) { t += dt; },
+    render() {
+      // Fundo
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#1a0530'); g.addColorStop(1, '#3a1a5a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+      // Layout reservado (em px do canvas lógico)
+      const titleY = 20, subtitleY = 46;
+      const phraseReserve = 50;   // espaço para a frase
+      const hintReserve   = 28;   // espaço para a dica
+      const topReserve    = 70;   // título + subtítulo
+      const sideMargin    = 40;
+      const borderPad     = 10;   // borda branca da moldura
+
+      // Espaço máximo disponível para a FOTO (já descontando bordas)
+      const maxFotoW = Math.min(420, W - sideMargin*2) - borderPad*2;
+      const maxFotoH = H - topReserve - phraseReserve - hintReserve - borderPad*2;
+
+      // Calcula tamanho da foto mantendo proporção
+      const img = (typeof imagensCarregadas !== 'undefined') ? imagensCarregadas[page] : null;
+      let fotoW, fotoH;
+      if (img && img.complete && img.naturalWidth > 0) {
+        const r = Math.min(maxFotoW / img.naturalWidth, maxFotoH / img.naturalHeight);
+        fotoW = img.naturalWidth * r;
+        fotoH = img.naturalHeight * r;
+      } else {
+        fotoW = Math.min(220, maxFotoW);
+        fotoH = Math.min(140, maxFotoH);
+      }
+
+      // Moldura se ajusta à foto
+      const molduraW = fotoW + borderPad*2;
+      const molduraH = fotoH + borderPad*2;
+      const molduraX = (W - molduraW) / 2;
+      const molduraY = topReserve;
+      const fotoX = molduraX + borderPad;
+      const fotoY = molduraY + borderPad;
+
+      // Títulos
+      text('★ ÁLBUM DE FOTOS ★', W/2, titleY, 16, '#ffd86a', 'center');
+      const p = pages[page];
+      text(`Capítulo ${p.id} — ${p.name}`, W/2, subtitleY, 18, '#fff', 'center');
+
+      // Moldura
+      ctx.fillStyle = '#fff'; ctx.fillRect(molduraX, molduraY, molduraW, molduraH);
+      ctx.fillStyle = '#222'; ctx.fillRect(molduraX+4, molduraY+4, molduraW-8, molduraH-8);
+
+      // Foto
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, fotoX, fotoY, fotoW, fotoH);
+      } else {
+        text('[ carregando foto... ]', W/2, fotoY + fotoH/2, 12, '#aaa', 'center');
+      }
+
+      // Frase (logo abaixo da moldura)
+      const phraseY = molduraY + molduraH + 18;
+      textWrap(`"${p.phrase}"`, W/2, phraseY, W - 80, 12, 'rgba(255,255,255,0.9)', 'center');
+
+      // Dica
+      const isLast = (page === pages.length - 1);
+      const hint = isLast ? 'Toque para voltar ao início →' : 'Toque para próxima página →';
+      text(hint, W/2, H - 14, 11, `rgba(255,255,255,${0.7+Math.sin(t*4)*0.3})`, 'center');
+    }
+  };
 }
 
 window.addEventListener('keydown', (e) => {
